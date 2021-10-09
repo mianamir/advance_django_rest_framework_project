@@ -1,2 +1,2 @@
-# advance_django_rest_framework_project
- Advance Django Rest Framework Project
+# Advance Django Rest Framework Project
+ Used Advance Django Rest Framework Techniques and implemented the Vanding machine 
