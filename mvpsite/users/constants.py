@@ -30,6 +30,7 @@ SAFE_REQUEST_METHODS = ('GET', 'HEAD', 'OPTIONS')
 
 EMPTY_RESPONSE = dict()
 MESSAGE_KEY = f'message'
+ERROR_MESSAGE_KEY = f'error_message'
 DATA_KEY = f'data'
 IS_SUCCESSFULL = "is_successfull"
 IS_FAILED = "is_failed"

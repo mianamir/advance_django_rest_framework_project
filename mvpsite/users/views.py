@@ -33,6 +33,11 @@ from custom_helpers.custom_responses import (
     get_success_response,
     get_failure_response
 )
+
+from custom_helpers.messages import (
+    VENDING_MACHINE_COINS_VALID_MESSAGE
+)
+
 from custom_helpers.custom_jwt_authentication import CustomJWTAuthentication
 # from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -121,23 +126,68 @@ class CreateUserAPIView(APIView):
                 return Response(get_success_response(**data), status=status.HTTP_201_CREATED)        
         except Exception as e:
             print(e)
-            return Response(f'{get_failure_response()}, {e}', 
+            return Response(get_failure_response(**{'error': e}), 
             status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(get_failure_response(), status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(get_failure_response(), 
+        status=status.HTTP_400_BAD_REQUEST)
 
 
 class DepositAPIView(APIView):
     authentication_classes = [CustomJWTAuthentication,]
     permission_classes = [IsAuthenticated, ]
 
-    def post(self, request):
+    def deposit_amount(self, *args, **kwargs):
         try:
-            deposit_amount = request.data.get("deposit_amount")
-            if deposit_amount in AMOUNT_DATA:
-                data = {"data": deposit_amount}
+            user = User.objects.get(id=kwargs['user_id'])
+        except User.DoesNotExist as u_ex:
+            print(f'User not found for #{kwargs["user_id"]} ID.')
+            return None
+        else:
+            if user:
+                # get user profile obj
+                up_obj = UserProfile.objects.get(user_id=user.id)
+
+                # users with a “buyer” role can deposit 5, 10, 20, 50 
+                # and 100 cent coins into their vending machine account
+                print(f'User #{kwargs["user_id"]} ID \
+                is depositing {kwargs["deposit"]} amount in vending machine account')
+
+                up_obj.deposit += kwargs['deposit']
+                up_obj.save()
+
+                return user, up_obj
+
+
+    def post(self, request):
+        print(f'User is authenticated using JWT token: {request.user.id}')
+        data = request.data
+        try:
+            deposit = data['deposit']
+            if deposit in AMOUNT_DATA:
+
+                user_req = {
+                    'user_id': request.user.id,
+                    'deposit': deposit
+                }
+
+                user, up = self.deposit_amount(**user_req)
+
+                res = {
+                    'id': user.id, 
+                    'first_name': user.first_name, 
+                    'last_name': user.last_name, 
+                    'username': user.username, 
+                    'email': user.email,
+                    'role': up.role,
+                   'deposit': up.deposit
+                }
+
+                data = {"data": res}
                 return Response(get_success_response(**data), status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(get_failure_response(), status=status.HTTP_400_BAD_REQUEST)
+            return Response(get_failure_response(**{'error': e}), 
+            status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(get_failure_response(), status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(get_failure_response(**{'error': VENDING_MACHINE_COINS_VALID_MESSAGE}), 
+        status=status.HTTP_406_NOT_ACCEPTABLE)

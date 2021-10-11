@@ -29,18 +29,21 @@ class CustomJWTAuthentication(JWTAuthentication):
             payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=['HS256'])
             print(f'decode access token payload: {payload}')
             user = User.objects.get(id=payload['user_id'])
-            print(f'user object found: {user}')
-            if user.is_active:
+            print(f'user object found: {str(user)}')
+            if user:
                 up_obj = UserProfile.objects.get(user_id=user.id)
+                print(f'user profile object found: {str(up_obj)},\
+                 role: {str(up_obj.role)}, current deposit: {up_obj.deposit}')
+
                 # users with a “buyer” role can deposit 5, 10, 20, 50 and 100 cent 
                 # coins into their vending machine account
 
-                if up_obj.role == BUYER:
+                if up_obj and up_obj.role == BUYER:
                     return (user, None)
             
         except InvalidToken as it_ex:
             print(f'User has not valid data to perform this action, error: {it_ex}')
-            return None
+            return (None, None)
 
         print(f'Unable to perform this action, please check your input.')
-        return None
+        return (None, None)
