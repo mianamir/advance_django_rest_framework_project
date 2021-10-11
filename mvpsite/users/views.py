@@ -21,9 +21,14 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer
 )
+from .models import UserProfile
 from users.constants import (
-    AMOUNT_DATA
+    AMOUNT_DATA, 
+    ADMIN, 
+    SELLER, 
+    BUYER
 )
+
 from custom_helpers.custom_responses import (
     get_success_response,
     get_failure_response
@@ -63,7 +68,63 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     permission_classes = list()
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.order_by('-id').all()
+
+
+class CreateUserAPIView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        data = request.data
+
+        # get user profile data
+        role = data.pop('role')
+        deposit = data.pop('deposit')
+
+        try:
+            user = User.objects.create(**data)
+
+            user.set_password(data['password'])
+            user.save()
+            
+            print(f'User created: {str(user)}')
+
+            if user:
+                # prepare the request data for user profile
+                up_data = dict()
+
+                up_data['user_id'] = user.id
+                up_data['role'] =  role
+                up_data['deposit'] = deposit
+                    
+                # save user profile
+                user_profile_obj = UserProfile.objects.create(**up_data)
+
+                # prepare the final response
+                
+                res = {
+                    'id': user.id, 
+                    'first_name': user.first_name, 
+                    'last_name': user.last_name, 
+                    'username': user.username, 
+                    'email': user.email 
+                }
+
+                # append user profile data into the final response
+
+                res['role'] = user_profile_obj.role
+                res['deposit'] = user_profile_obj.deposit
+
+                data = {'data': res}
+
+                return Response(get_success_response(**data), status=status.HTTP_201_CREATED)        
+        except Exception as e:
+            print(e)
+            return Response(f'{get_failure_response()}, {e}', 
+            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(get_failure_response(), status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class DepositAPIView(APIView):

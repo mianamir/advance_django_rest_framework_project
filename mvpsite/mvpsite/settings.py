@@ -29,7 +29,13 @@ ALLOWED_HOSTS = []
 
 
 # define auth user
-AUTH_USER_MODEL = 'users.User'
+# AUTH_USER_MODEL = 'users.User'
+
+# AUTHENTICATION_BACKENDS = (
+#     # ('django.contrib.auth.backends.ModelBackend'),
+#     # ('custom_helpers.custom_email_backend.CustomEmailBackend'),
+#     ('custom_helpers.custom_email_backend.EmailAuthBackend'),
+# )
 
 
 # Application definition
