@@ -45,8 +45,11 @@ class IsOwnerOrReadOnly(BasePermission):
             return True
 
         if request.method in UNSAFE_REQUEST_METHODS:
+            print(f'testing has_object_permission for \
+            {request.user.id}, request obj: {request}')
             try:
-                obj = Product.objects.get(seller_id=user.id)
+                obj = Product.objects.\
+                filter(seller_id=request.user.id)
             except Product.DoesNotExist as u_ex:
                 print(f'Product not found for seller with #{request.user.id} ID.')
                 return None

@@ -39,7 +39,6 @@ from custom_helpers.messages import (
 )
 
 from custom_helpers.custom_jwt_authentication import CustomJWTAuthentication
-# from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class MyObtainTokenPairView(TokenObtainPairView):
@@ -123,7 +122,8 @@ class CreateUserAPIView(APIView):
 
                 data = {'data': res}
 
-                return Response(get_success_response(**data), status=status.HTTP_201_CREATED)        
+                return Response(get_success_response(**data), 
+                status=status.HTTP_201_CREATED)        
         except Exception as e:
             print(e)
             return Response(get_failure_response(**{'error': e}), 

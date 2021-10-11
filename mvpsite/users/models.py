@@ -152,9 +152,9 @@ class UserProfile(CustomParentModel):
 
 def get_user_by_id(*args, **kwargs):
     try:
-        _obj = User.objects.filter(id=kwargs['id'], userprofile__role=SELLER).first()
+        _obj = User.objects.filter(id=kwargs['id']).first()
     except Exception as ex:
-        print(f'Exception from User table, details: {ex}')
+        print(f'Exception from User table, details: {str(ex)}')
         return None
     else:
         if _obj:
