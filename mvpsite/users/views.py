@@ -191,3 +191,61 @@ class DepositAPIView(APIView):
 
         return Response(get_failure_response(**{'error': VENDING_MACHINE_COINS_VALID_MESSAGE}), 
         status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class BuyAPIView(APIView):
+    authentication_classes = [CustomJWTAuthentication,]
+    permission_classes = [IsAuthenticated, ]
+
+    def buy_product(self, *args, **kwargs):
+        try:
+            user = User.objects.get(id=kwargs['user_id'])
+        except User.DoesNotExist as u_ex:
+            print(f'User not found for #{kwargs["user_id"]} ID.')
+            return None
+        else:
+            if user:
+                # get user profile obj
+                up_obj = UserProfile.objects.get(user_id=user.id)
+
+                print(f'User #{kwargs["user_id"]} ID \
+                is depositing {kwargs["deposit"]} amount in vending machine account')
+
+                up_obj.deposit += kwargs['deposit']
+                up_obj.save()
+
+                return user, up_obj
+
+
+    def post(self, request):
+        print(f'User is authenticated using JWT token: {request.user.id}')
+        data = request.data
+        try:
+            buy_amount = data['buy_amount']
+            if request.user and buy_amount:
+
+                user_req = {
+                    'user_id': request.user.id,
+                    'buy_amount': buy_amount
+                }
+
+                user, up = self.buy_product(**user_req)
+
+                res = {
+                    'id': user.id, 
+                    'first_name': user.first_name, 
+                    'last_name': user.last_name, 
+                    'username': user.username, 
+                    'email': user.email,
+                    'role': up.role,
+                   'deposit': up.deposit
+                }
+
+                data = {"data": res}
+                return Response(get_success_response(**data), status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(get_failure_response(**{'error': e}), 
+            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(get_failure_response(**{'error': VENDING_MACHINE_COINS_VALID_MESSAGE}), 
+        status=status.HTTP_406_NOT_ACCEPTABLE)

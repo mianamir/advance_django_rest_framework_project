@@ -20,7 +20,8 @@ from users.views import (
     LogoutView,
     UserViewSet,
     DepositAPIView, 
-    CreateUserAPIView
+    CreateUserAPIView, 
+    BuyAPIView
 )
 
 router = DefaultRouter()
@@ -34,7 +35,8 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('logout/', LogoutView.as_view(), name='auth_logout'),
     path('deposit/', DepositAPIView.as_view(), name='deposit'),
-    path('users/create/', CreateUserAPIView().as_view(), name='create')
+    path('users/create/', CreateUserAPIView().as_view(), name='create'),
+    path('buy/', BuyAPIView.as_view(), name='buy'),
 ]
 
 

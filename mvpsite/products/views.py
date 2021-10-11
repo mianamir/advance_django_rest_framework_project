@@ -22,14 +22,17 @@ from rest_framework.decorators import api_view
 from .models import Product
 from .serializers import ProductSerializer
 from custom_helpers.custom_auth import CustomAuthentication
-from custom_helpers.custompermissions import CustomReadOnly
+from custom_helpers.custompermissions import IsOwnerOrReadOnly
+from rest_framework.permissions import SAFE_METHODS
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
     A viewset for getting products instances.
     """
-    authentication_classes = [CustomAuthentication, ]
-    permission_classes = [CustomReadOnly, ]
+    authentication_classes = []
+    permission_classes = []
     serializer_class = ProductSerializer
-    queryset = Product.objects.all()
+    queryset = Product.objects.order_by('-id').all()
+    
+    http_method_names = ['get']
