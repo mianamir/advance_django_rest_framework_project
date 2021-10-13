@@ -21,7 +21,8 @@ from users.views import (
     UserViewSet,
     DepositAPIView, 
     CreateUserAPIView, 
-    BuyAPIView
+    BuyAPIView, 
+    ResetVendingMachineAccountAPIView
 )
 
 router = DefaultRouter()
@@ -37,6 +38,9 @@ urlpatterns = [
     path('deposit/', DepositAPIView.as_view(), name='deposit'),
     path('users/create/', CreateUserAPIView().as_view(), name='create'),
     path('buy/', BuyAPIView.as_view(), name='buy'),
+    path('reset-vending-machine-account/', 
+    ResetVendingMachineAccountAPIView.as_view(), 
+    name='reset_vending_machine_account')
 ]
 
 

@@ -121,6 +121,7 @@ class UserProfile(CustomParentModel):
       default=ROLES.BUYER
     )
     deposit = models.FloatField(blank=True, null=True)
+    reset_deposit = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return f'User Profile({self.id}, {self.role})'
@@ -133,6 +134,17 @@ class UserProfile(CustomParentModel):
     def user_role(self):
         "Is the user a member of staff?"
         return self.role
+
+    def as_dict(self):
+        obj = dict()
+        obj['id'] = user.id
+        obj['first_name'] = user.first_name
+        obj['last_name'] = user.last_name
+        obj['username'] = user.username
+        obj['email'] = user.email
+        obj['role'] = up_obj.role
+        obj['deposit']:  up_obj.deposit
+        return obj
 
 
    
@@ -152,9 +164,20 @@ class UserProfile(CustomParentModel):
 
 def get_user_by_id(*args, **kwargs):
     try:
-        _obj = User.objects.filter(id=kwargs['id']).first()
+        _obj = User.objects.filter(id=kwargs['user_id']).first()
     except Exception as ex:
         print(f'Exception from User table, details: {str(ex)}')
+        return None
+    else:
+        if _obj:
+            return _obj
+    return None
+
+def get_user_profile_by_id(*args, **kwargs):
+    try:
+        _obj = UserProfile.objects.filter(id=kwargs['user_id']).first()
+    except Exception as ex:
+        print(f'Exception from User Profile table, details: {str(ex)}')
         return None
     else:
         if _obj:

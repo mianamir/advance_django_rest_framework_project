@@ -21,7 +21,16 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer
 )
-from .models import UserProfile
+from .models import (
+    UserProfile, 
+    get_user_by_id, 
+    get_user_profile_by_id
+    )
+from products.models import (
+    get_product_by_id, 
+    Product, 
+    BuyerPurchase
+    )
 from users.constants import (
     AMOUNT_DATA, 
     ADMIN, 
@@ -101,6 +110,7 @@ class CreateUserAPIView(APIView):
                 up_data['user_id'] = user.id
                 up_data['role'] =  role
                 up_data['deposit'] = deposit
+                up_data['reset_deposit'] = deposit
                     
                 # save user profile
                 user_profile_obj = UserProfile.objects.create(**up_data)
@@ -199,52 +209,127 @@ class BuyAPIView(APIView):
 
     def buy_product(self, *args, **kwargs):
         try:
-            user = User.objects.get(id=kwargs['user_id'])
-        except User.DoesNotExist as u_ex:
-            print(f'User not found for #{kwargs["user_id"]} ID.')
-            return None
-        else:
-            if user:
-                # get user profile obj
-                up_obj = UserProfile.objects.get(user_id=user.id)
+            # product object
+            product = get_product_by_id(**kwargs)
 
-                print(f'User #{kwargs["user_id"]} ID \
-                is depositing {kwargs["deposit"]} amount in vending machine account')
+            # user object
+            user = get_user_by_id(**kwargs)
 
-                up_obj.deposit += kwargs['deposit']
-                up_obj.save()
+            # user profile object
+            up_obj = get_user_profile_by_id(**kwargs)
 
-                return user, up_obj
+            if product and user and up_obj:
+                res_obj = BuyerPurchase.objects.create(
+                    purchase_price=kwargs['purchase_price'], 
+                    product=product, 
+                    buyer=user
+                    )
 
+                # update the user profile obj
+                if up_obj.deposit > res_obj.purchase_price:
+                        up_obj.deposit -= res_obj.purchase_price
+                        up_obj.save()
 
-    def post(self, request):
-        print(f'User is authenticated using JWT token: {request.user.id}')
-        data = request.data
-        try:
-            buy_amount = data['buy_amount']
-            if request.user and buy_amount:
+                # prepare the response
 
-                user_req = {
-                    'user_id': request.user.id,
-                    'buy_amount': buy_amount
-                }
+                purchases_objs = BuyerPurchase.objects.filter(user_id=kwargs['user_id']).all()
 
-                user, up = self.buy_product(**user_req)
+                total_purchase = 0.0
+
+                list_products = list()
+
+                for purchase in purchases_objs:
+                    total_purchase += purchase.purchase_price
+
+                    product = get_product_by_id(**{'product_id': purchase.product_id})
+
+                    if product:
+                        list_products.append({
+                            'id': product.id,
+                            'product_name': product.product_name
+                        })
+
 
                 res = {
-                    'id': user.id, 
-                    'first_name': user.first_name, 
-                    'last_name': user.last_name, 
-                    'username': user.username, 
-                    'email': user.email,
-                    'role': up.role,
-                   'deposit': up.deposit
+                    'total_purchase': total_purchase,
+                    'list_products': list_products
                 }
+                return res
+        except:
+            return None
+
+        return None
+
+    def post(self, request):
+        
+        user = request.user
+
+        print(f'User is authenticated using JWT token: {user.id}')
+
+        data = request.data
+
+        try:
+            if 'product_id' in data and 'product_amount' in data:
+
+                product_req = {
+                    'user_id': user.id,
+                    'purchase_price': data['product_amount'],
+                    'product_id': data['product_id']
+                }
+
+                res_obj = self.buy_product(**product_req)
+
+                data = {"data": res_obj}
+                return Response(get_success_response(**data), status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(get_failure_response(**{'error': str(e)}), 
+            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(get_failure_response(**{'error': VENDING_MACHINE_COINS_VALID_MESSAGE}), 
+        status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+
+class ResetVendingMachineAccountAPIView(APIView):
+    authentication_classes = [CustomJWTAuthentication,]
+    permission_classes = [IsAuthenticated, ]
+
+    def reset_user(self, *args, **kwargs):
+        try:
+            # user profile object
+            up_obj = get_user_profile_by_id(**kwargs)
+            up_obj.deposit = up_obj.reset_deposit
+            up_obj.save()
+
+        except:
+            print(f'User not found for #{kwargs["user_id"]} ID.')
+            return None
+
+        return None
+
+    def post(self, request):
+        
+        user = request.user
+
+        print(f'User is authenticated using JWT token: {user.id}')
+
+        data = request.data
+
+        try:
+            if user:
+
+                user_req = {
+                    'user_id': user.id
+                }
+
+                res_obj = self.reset_user(**user_req)
+
+                res = "Reset user for current products purchases"
 
                 data = {"data": res}
                 return Response(get_success_response(**data), status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(get_failure_response(**{'error': e}), 
+            return Response(get_failure_response(**{'error': str(e)}), 
             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(get_failure_response(**{'error': VENDING_MACHINE_COINS_VALID_MESSAGE}), 
