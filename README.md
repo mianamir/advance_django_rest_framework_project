@@ -5,4 +5,4 @@
  
  Tech Stack: Python/Django(DRF), Postman, SQLite database
  
- Views, Serializers, Models, Custom Permissions/Authenctications, Custom packages  
+ Views, Serializers, Models, Custom Permissions/Authentications, Custom packages  
