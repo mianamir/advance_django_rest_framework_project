@@ -24,9 +24,9 @@ from users.constants import (
     )
 
 
-class ProductsListTestCase(APITestCase):
+class ProductsManagementTestCase(APITestCase):
 
-    """ Test module for GET all products API """
+    """ Test module for products APIs """
 
     def setUp(self):
         """
