@@ -173,6 +173,11 @@ def get_user_by_id(*args, **kwargs):
             return _obj
     return None
 
+
+def create_user(*args, **kwargs):
+    ...
+    
+
 def get_user_profile_by_id(*args, **kwargs):
     try:
         _obj = UserProfile.objects.filter(id=kwargs['user_id']).first()
